@@ -18,13 +18,14 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, "src/main.ts"),
-        post: resolve(__dirname, "src/post.ts"),
+        //post: resolve(__dirname, "src/post.ts"),
         // pre: resolve(__dirname, "src/pre.ts"),
       },
       output: [
         {
           format: "es",
           entryFileNames: "[name].js",
+          inlineDynamicImports: true,
         },
       ],
       preserveSymlinks: true,
