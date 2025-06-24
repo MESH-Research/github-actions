@@ -4,7 +4,7 @@ import { defineConfig } from "vite";
 import { nodeExternals } from "rollup-plugin-node-externals";
 
 export default defineConfig({
-  plugins: [nodeExternals()],
+  plugins: [nodeExternals({ deps: false })],
   resolve: {
     alias: {
       "/src": resolve(__dirname, "src"),
