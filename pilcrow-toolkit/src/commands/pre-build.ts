@@ -17,7 +17,15 @@ const command = runCommand({
     if (core.isDebug()) {
       const artifact = new DefaultArtifactClient()
 
-      const bakeFiles = core.getState('bakeFiles')
+      const bakeFiles = core
+        .getState('bakeFiles')
+        .split(',')
+        .filter((f) => f)
+      if (bakeFiles.length === 0) {
+        core.debug('No bake files to upload as artifacts.')
+        return
+      }
+
       core.debug('Bake files: ' + bakeFiles)
       core.debug('Uploading bake files as artifact...')
       const tmpPath = await fs.mkdtemp(`${tmpdir()}${sep}-bake-`)
@@ -54,6 +62,6 @@ const command = runCommand({
   },
   main: async function ({ 'bake-files': bakeFiles }: ActionInputs) {
     core.debug('Saving bake file names to upload as artifacts...')
-    core.saveState('bakeFiles', bakeFiles)
+    core.saveState('bakeFiles', bakeFiles.join(','))
   }
 })

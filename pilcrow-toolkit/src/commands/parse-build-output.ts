@@ -115,15 +115,23 @@ function parseDockerMeta(bakeMetaOutput: string) {
 
 async function extractOutputCache(cachePath: string) {
   const dockerBuildDir = await fs.mkdtemp(`${tmpdir()}${sep}output-cache-`)
-  const dockerfile = './.github/actions/toolkit/Dockerfile.extract-cache'
+  const dockerfile = `
+FROM busybox:1
+ARG BUILDSTAMP
+RUN --mount=type=cache,target=/tmp/output \
+    echo $BUILDSTAMP \
+    mkdir -p /var/output-cache/ \
+    && cp -p -R /tmp/output/. /var/.output-cache/ \
+    && rm -rf /tmp/output/* || true
+
+  `
+  await fs.writeFile(dockerBuildDir + '/Dockerfile', dockerfile)
   //Generate a timestamp to use to prevent docker from caching
   const buildStamp = new Date().toISOString()
 
   await getCommandOutput('docker', [
     'buildx',
     'build',
-    '-f',
-    dockerfile,
     '--tag',
     'output:extract',
     '--build-arg',
