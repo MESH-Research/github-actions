@@ -9,18 +9,18 @@ inputs:
   target:
     description: Docker Bake Target
     required: false
-    default: 'ci'
+    default: "ci"
   docker-metadata:
     description: Docker metadata from bake action
     required: false
   command:
     description: Toolkit command to run
     required: true
-  bake-inputs:
+  bake-files:
     description: Docker bake file inputs to capture.
   ### These input are confiuration.  They have sensible defaults and are optional.
   oras-bundle-type:
-    default: 'application/vnd.pilcrow.toolkit.bundle.v1+json'
+    default: "application/vnd.pilcrow.toolkit.bundle.v1+json"
     description: ORAS artifact type for the frontend bundle
     required: false
   oras-actor:
@@ -29,7 +29,7 @@ inputs:
   output-cache-path:
     description: Path to store output cache
     required: false
-    default: '.output-cache'
+    default: ".output-cache"
   token:
     description: GitHub token to use for authentication
     required: false
