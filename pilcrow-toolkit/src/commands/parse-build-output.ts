@@ -6,7 +6,7 @@ import { runCommand } from '../lib/action.js'
 import { getCommandOutput } from '/lib/tools.js'
 import { DefaultArtifactClient } from '@actions/artifact'
 import { dirname } from 'node:path'
-import { ActionInputs } from '../types.js'
+import type { ActionInputs } from '../types.ts'
 export { command as runCommand }
 
 const command = runCommand({
@@ -98,9 +98,7 @@ const command = runCommand({
 })
 
 function parseDockerMeta(bakeMetaOutput: string) {
-  const meta = JSON.parse(bakeMetaOutput).catch((reason: unknown) =>
-    core.error('core.error parsing docker bake metadata: ' + reason)
-  )
+  const meta = JSON.parse(bakeMetaOutput)
   if (!meta) {
     return
   }
