@@ -1,6 +1,7 @@
 import * as fs from 'fs/promises'
 import * as core from '@actions/core'
 import { FancyAnsi } from 'fancy-ansi'
+import path from 'path'
 
 //import { AnsiUp } from 'ansi_up'
 
@@ -16,6 +17,19 @@ export async function generateSummary(paths: string[]) {
   for (const dir of paths) {
     core.debug('Processing directory: ' + dir)
     const files = await fs.readdir(dir, { withFileTypes: true })
+    const hasStdErr = files.some((f) => f.name.includes('stderr'))
+
+    if (hasStdErr) {
+      core.warning(`${path.dirname(dir)} wrote to stderr.  Check logs.`)
+      core.summary.addRaw(
+        '| :warning:     | The build wrote to stderr during execution.  Check below for errors/warnings. |',
+        true
+      )
+      core.summary.addRaw(
+        '|---------------|:------------------------------------------------------------------------------|',
+        true
+      )
+    }
     if (files.length === 0) {
       core.debug('No files found in directory: ' + dir)
       continue
@@ -47,36 +61,30 @@ export async function generateSummary(paths: string[]) {
       core.info(
         `📝 Processing file - svc: ${service}, output: ${output}, format: ${ext}`
       )
-      const summary = core.summary
-        .addRaw(`<details><summary>${service} - ${output}</summary>`)
-        .addEOL()
-        .addEOL()
-
-      await summaryProcessors[ext](fullPath, summary)
-
-      summary.addEOL().addRaw('</details>').addEOL().addEOL()
+      await summaryProcessors[ext](fullPath, outputDetails as OutputDetails)
     }
     await core.summary.write()
   }
 }
 
 const summaryProcessors = {
-  txt: async function (
-    file: string,
-    summary: ReturnType<typeof core.summary.addRaw>
-  ) {
+  txt: async function (file: string, { service, output }: OutputDetails) {
     const fancyAnsi = new FancyAnsi()
 
     core.debug('Converting ANSI to HTML for file: ' + file)
-    //Load file contents into variable
     const content = await fs.readFile(file)
-    summary.addRaw(fancyAnsi.toHtml(content.toString()))
+    const { addRaw } = core.summary
+    addRaw(`<details><summary>${service} - ${output}</summary>`, true)
+    addRaw('<pre>', true)
+    addRaw(fancyAnsi.toHtml(content.toString()), true)
+    addRaw('</pre>', true)
+    addRaw('</details>', true)
   },
-  md: async function (
-    file: string,
-    summary: ReturnType<typeof core.summary.addRaw>
-  ) {
+  md: async function (file: string) {
     core.debug('Processing Markdown file: ' + file)
-    summary.addRaw((await fs.readFile(file)).toString())
+    const { addRaw } = core.summary
+    addRaw('<details><summary>Markdown Output</summary>', true)
+    addRaw((await fs.readFile(file)).toString())
+    addRaw('</details>', true)
   }
 }
