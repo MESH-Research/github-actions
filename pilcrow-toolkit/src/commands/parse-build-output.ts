@@ -52,6 +52,7 @@ const command = runCommand({
     core.info('Attaching frontend bundle to image: ' + frontendImage)
     const orasLoginOpts = [
       'login',
+      'grcr.io',
       '--username',
       orasActor,
       '--password',
