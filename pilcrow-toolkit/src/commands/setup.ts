@@ -20,7 +20,11 @@ const command = runCommand({
    *   - set outputs for version, version-url, version-date, repository,
    *     docker-registry-cache, buildstamp, image-template
    */
-  main: async function ({ target }: ActionInputs) {
+  main: async function ({
+    target,
+    registryCachePattern,
+    registryPublishPattern
+  }: ActionInputs) {
     const version = await getCommandOutput('git', [
       'describe',
       '--tags',
@@ -38,20 +42,17 @@ const command = runCommand({
     ])
 
     const buildstamp = await getCommandOutput('date', ['--iso=ns'])
-    const dockerRegistryCache = `ghcr.io/${repository}/cache/__service__`
 
     core.setOutput('version', version.trim())
     core.setOutput('version-url', versionUrl)
     core.setOutput('version-date', versionDate.trim())
     core.setOutput('repository', repository)
-    core.setOutput('docker-registry-cache', dockerRegistryCache)
+    core.setOutput('docker-registry-cache', registryCachePattern)
     core.setOutput('buildstamp', buildstamp.trim())
 
     core.setOutput(
       'image-template',
-      target == 'release'
-        ? `ghcr.io/${repository}/__service__`
-        : dockerRegistryCache
+      target == 'release' ? registryPublishPattern : registryCachePattern
     )
   }
 })

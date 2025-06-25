@@ -22,29 +22,29 @@ const command = runCommand({
   post: async function ({ orasActor, token, orasBundleType }: ActionInputs) {
     const frontendBundle = core.getState('frontendBundle')
     const frontendImage = core.getState('frontendImage')
-    if (!frontendBundle || !frontendImage) {
-      core.info('✅ No frontend bundle to attach.')
-      return
-    }
+    if (frontendBundle && frontendImage) {
+      core.info('📩 Uploading frontend bundle as GHA artifact...')
+      await uploadGHAArtifact('frontend-bundle', frontendBundle)
 
-    core.info('📩 Uploading frontend bundle as GHA artifact...')
-    await uploadGHAArtifact('frontend-bundle', frontendBundle)
-
-    if (!(await imageExistsInRegistry(frontendImage))) {
+      if (await imageExistsInRegistry(frontendImage)) {
+        core.info('📎 Attaching frontend bundle to image: ' + frontendImage)
+        await attachBundleToImage(
+          frontendImage,
+          frontendBundle,
+          orasActor,
+          orasBundleType,
+          token
+        )
+      } else {
+        core.info(
+          '⏭️ Frontend image not found in registry, skipping attaching bundle.'
+        )
+      }
+    } else {
       core.info(
-        '⏭️ Frontend image not found in registry, skipping attaching bundle.'
+        '⏭️ No frontend bundle or image found, skipping upload and attach.'
       )
-      return
     }
-
-    core.info('📎 Attaching frontend bundle to image: ' + frontendImage)
-    await attachBundleToImage(
-      frontendImage,
-      frontendBundle,
-      orasActor,
-      orasBundleType,
-      token
-    )
 
     core.info('📊 Generating build summaries...')
     const dirs = JSON.parse(core.getState('outputCacheDirs') || '[]')
@@ -52,9 +52,9 @@ const command = runCommand({
       core.info(
         '⏭️ No output cache directories found, skipping summary generation.'
       )
-      return
+    } else {
+      await generateSummary(dirs)
     }
-    await generateSummary(dirs)
   },
   /****************************************************
    * Main stage command
