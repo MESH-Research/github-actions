@@ -16,9 +16,9 @@ const config = {
     sourcemap: true
   },
   plugins: [
-    dynamicImportVars(),
     typescript(),
     nodeResolve({ preferBuiltins: true }),
+    dynamicImportVars(),
     commonjs()
   ]
 }
