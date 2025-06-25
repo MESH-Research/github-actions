@@ -47,7 +47,7 @@ export async function generateSummary(paths: string[]) {
         .addEOL()
         .addEOL()
 
-      summaryProcessors[ext](fullPath, summary)
+      await summaryProcessors[ext](fullPath, summary)
 
       summary.addEOL().addRaw('</details>').addEOL().addEOL()
     }
