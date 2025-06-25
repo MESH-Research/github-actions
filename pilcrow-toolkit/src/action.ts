@@ -2,7 +2,7 @@ import { debug, setFailed } from '@actions/core'
 import type { ActionCommand, ActionStage, ActionInputs } from 'types.ts'
 
 function importCommand(command: string): Promise<ActionCommand> {
-  return import(`../commands/${command}.ts`)
+  return import(`../commands/${command}.js`)
 }
 
 export async function run(
