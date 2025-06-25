@@ -118,7 +118,7 @@ RUN --mount=type=cache,target=/tmp/output \
   //Generate a timestamp to use to prevent docker from caching
   const buildStamp = new Date().toISOString()
 
-  core.info('Building cache extractor image...')
+  core.info('📦 Building cache extractor image...')
   await getCommandOutput('docker', [
     'buildx',
     'build',
@@ -131,7 +131,7 @@ RUN --mount=type=cache,target=/tmp/output \
   ])
   core.info('🗑️ Removing existing cache extractor (if any)...')
   await getCommandOutput('docker', ['rm', '-f', 'cache-container'])
-  core.info('🏗️ Creating cache extractor...')
+  core.info('🚧 Creating cache extractor...')
   await getCommandOutput('docker', [
     'create',
     '-ti',
@@ -139,7 +139,7 @@ RUN --mount=type=cache,target=/tmp/output \
     'cache-container',
     'output:extract'
   ])
-  core.info('📦 Copying cache from extractor...')
+  core.info('🏗️ Copying cache from extractor...')
 
   await getCommandOutput('docker', [
     'cp',

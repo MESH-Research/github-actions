@@ -15,6 +15,10 @@ export async function generateSummary(paths: string[]) {
   for (const dir of paths) {
     core.debug('Processing directory: ' + dir)
     const files = await fs.readdir(dir, { withFileTypes: true })
+    if (files.length === 0) {
+      core.debug('No files found in directory: ' + dir)
+      continue
+    }
     for (const file of files) {
       if (!file.isFile()) {
         core.debug('Skipping non-file: ' + file.name)
