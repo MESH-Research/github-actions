@@ -17,6 +17,11 @@ export async function generateSummary(paths: string[]) {
   for (const dir of paths) {
     core.debug('Processing directory: ' + dir)
     const files = await fs.readdir(dir, { withFileTypes: true })
+    const onlyFiles = files.filter((f) => !f.isFile())
+    const fileStats = await Promise.all(
+      onlyFiles.map((f) => fs.stat(path.join(dir, f.name)))
+    )
+    onlyFiles.filter(async (f, idx) => fileStats[idx].size > 0)
     const hasStdErr = files.some((f) => f.name.includes('stderr'))
 
     if (hasStdErr) {
