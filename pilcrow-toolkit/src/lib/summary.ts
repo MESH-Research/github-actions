@@ -21,6 +21,9 @@ export async function generateSummary(paths: string[]) {
     const fileStats = await Promise.all(
       onlyFiles.map((f) => fs.stat(path.join(dir, f.name)))
     )
+    core.debug(
+      `Found Files: ${fileStats.map((s, idx) => ({ name: onlyFiles[idx].name, size: s.size })).join(', ')}`
+    )
     onlyFiles.filter(async (f, idx) => fileStats[idx].size > 0)
     const hasStdErr = files.some((f) => f.name.includes('stderr'))
 
