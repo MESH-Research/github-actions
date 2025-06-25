@@ -1,7 +1,7 @@
 import commonjs from '@rollup/plugin-commonjs'
 import nodeResolve from '@rollup/plugin-node-resolve'
 import typescript from '@rollup/plugin-typescript'
-import dynamicImportVars from '@rollup/plugin-dynamic-import-vars'
+import json from '@rollup/plugin-json'
 
 const config = {
   input: {
@@ -16,10 +16,10 @@ const config = {
     sourcemap: true
   },
   plugins: [
+    commonjs(),
     typescript(),
     nodeResolve({ preferBuiltins: true }),
-    dynamicImportVars(),
-    commonjs()
+    json()
   ]
 }
 

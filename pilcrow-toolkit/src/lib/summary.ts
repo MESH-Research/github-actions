@@ -1,7 +1,7 @@
 import * as glob from '@actions/glob'
 import * as fs from 'fs/promises'
 import * as core from '@actions/core'
-import { AnsiUp } from 'ansi_up'
+//import { AnsiUp } from 'ansi_up'
 
 type OutputDetails = {
   service: string
@@ -56,13 +56,13 @@ export async function generateSummary(path: string) {
 
 const summaryProcessors = {
   txt: async function (file: string) {
-    const ansi_up = new AnsiUp()
-    ansi_up.escape_html = false
+    //    const ansi_up = new AnsiUp()
+    //    ansi_up.escape_html = false
     core.debug('Converting ANSI to HTML for file: ' + file)
     //Load file contents into variable
     const content = await fs.readFile(file)
 
-    return ansi_up.ansi_to_html(content.toString())
+    return content.toString()
   },
   md: async function (file: string) {
     core.debug('Processing Markdown file: ' + file)

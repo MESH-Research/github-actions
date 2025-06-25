@@ -6,6 +6,7 @@ import { sep } from 'path'
 import { DefaultArtifactClient } from '@actions/artifact'
 import { cp } from '@actions/io'
 import { context } from '@actions/github'
+import { ActionInputs } from '../types.js'
 
 export { command as runCommand }
 
@@ -43,8 +44,8 @@ const command = runCommand({
       await fs.rm(tmpPath, { recursive: true, force: true })
     }
   },
-  main: async function () {
+  main: async function ({ 'bake-files': bakeFiles }: ActionInputs) {
     core.debug('Saving bake file names to upload as artifacts...')
-    core.saveState('bakeFiles', core.getInput('bake-files'))
+    core.saveState('bakeFiles', bakeFiles)
   }
 })

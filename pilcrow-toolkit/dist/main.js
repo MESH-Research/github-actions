@@ -1,38 +1,46 @@
-import { c as coreExports, r as run } from './action-BwnckRe-.js';
-import 'os';
-import 'crypto';
+import { r as run, g as getInputs } from './config-Cfi5s9xB.js';
 import 'fs';
+import 'os';
 import 'path';
-import 'http';
-import 'https';
+import 'assert';
+import 'crypto';
+import 'stream';
+import 'util';
+import 'fs/promises';
+import 'node:fs/promises';
+import 'node:crypto';
+import 'node:os';
+import 'node:util';
+import 'node:process';
+import 'node:http';
+import 'node:https';
+import 'node:zlib';
+import 'node:stream';
 import 'net';
 import 'tls';
-import 'assert';
-import 'util';
-import 'stream';
+import 'tty';
+import 'http';
+import 'https';
+import 'url';
 import 'buffer';
+import 'constants';
+import 'node:url';
+import 'node:path';
+import 'node:fs';
+import 'node:events';
+import 'node:string_decoder';
+import 'zlib';
 import 'querystring';
 import 'stream/web';
-import 'node:stream';
-import 'node:util';
-import 'node:events';
 import 'worker_threads';
 import 'perf_hooks';
 import 'util/types';
 import 'async_hooks';
 import 'console';
-import 'url';
-import 'zlib';
 import 'diagnostics_channel';
 import 'child_process';
 import 'timers';
 
 console.log(process.env);
-const inputs = {
-    'docker-metadata': coreExports.getInput('docker-metadata'),
-    'bake-files': coreExports.getInput('bake-files'),
-    target: coreExports.getInput('target'),
-    command: coreExports.getInput('command', { required: true })
-};
-run('main', inputs);
+run('main', getInputs());
 //# sourceMappingURL=main.js.map

@@ -3,14 +3,18 @@ import * as fs from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { sep } from 'path'
 import { runCommand } from '../lib/action.js'
-import { getConfigValue } from '../lib/config.js'
 import { getCommandOutput } from '/lib/tools.js'
 import { DefaultArtifactClient } from '@actions/artifact'
 import { dirname } from 'node:path'
+import { ActionInputs } from '../types.js'
 export { command as runCommand }
 
 const command = runCommand({
-  post: async function () {
+  post: async function ({
+    'oras-actor': orasActor,
+    token,
+    'oras-bundle-type': orasBundleType
+  }: ActionInputs) {
     const frontendBundle = core.getState('frontendBundle')
     const frontendImage = core.getState('frontendImage')
     if (!frontendBundle || !frontendImage) {
@@ -39,10 +43,6 @@ const command = runCommand({
         )
       })
 
-    const artifactType = getConfigValue('oras-bundle-type')
-    const actor = getConfigValue('oras-actor')
-    const token = getConfigValue('token')
-
     try {
       await getCommandOutput('docker', ['manifest', 'inspect', frontendImage])
     } catch {
@@ -52,7 +52,7 @@ const command = runCommand({
     core.info('Attaching frontend bundle to image: ' + frontendImage)
     const orasLoginOpts: string[] = []
     orasLoginOpts
-      .concat(!!actor ? ['--username', actor] : [])
+      .concat(!!orasActor ? ['--username', orasActor] : [])
       .concat(!!token ? ['--password', token] : [])
 
     await getCommandOutput('oras', orasLoginOpts).catch((error: unknown) => {
@@ -66,7 +66,7 @@ const command = runCommand({
       frontendImage,
       '--disable-path-validation',
       '--artifact-type',
-      artifactType,
+      orasBundleType,
       frontendBundle
     ]).catch((error: unknown) => {
       core.error('Failed to attach bundle to image.')
@@ -74,10 +74,12 @@ const command = runCommand({
       throw error
     })
   },
-  main: async function () {
-    parseDockerMeta(core.getInput('docker-metadata'))
+  main: async function ({
+    'docker-metadata': dockerMetadata,
+    'output-cache-path': outputCachePath
+  }: ActionInputs) {
+    parseDockerMeta(dockerMetadata)
 
-    const outputCachePath = getConfigValue('output-cache-path')
     await extractOutputCache(outputCachePath)
 
     //Check if a frontend-bundle was written to the output cache.

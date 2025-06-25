@@ -1,9 +1,3 @@
-import { getInput } from '@actions/core'
 import { run } from './action.js'
-const inputs = {
-  'docker-metadata': getInput('docker-metadata'),
-  'bake-files': getInput('bake-files'),
-  target: getInput('target'),
-  command: getInput('command', { required: true })
-}
-run('pre', inputs)
+import { getInputs } from './lib/config.js'
+run('pre', getInputs())

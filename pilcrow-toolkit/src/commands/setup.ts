@@ -3,14 +3,17 @@ import * as core from '@actions/core'
 import { getCommandOutput } from '../lib/tools.js'
 import { generateSummary } from '../lib/summary.js'
 import { runCommand } from '../lib/action.js'
+import { ActionInputs } from '../types.js'
 
 export { command as runCommand }
 
 const command = runCommand({
-  post: async function () {
-    await generateSummary(core.getInput('output-cache-path'))
+  post: async function ({
+    'output-cache-path': outputCachePath
+  }: ActionInputs) {
+    await generateSummary(outputCachePath)
   },
-  main: async function () {
+  main: async function ({ target }: ActionInputs) {
     const version = await getCommandOutput('git', [
       'describe',
       '--tags',
@@ -36,8 +39,6 @@ const command = runCommand({
     core.setOutput('repository', repository)
     core.setOutput('docker-registry-cache', dockerRegistryCache)
     core.setOutput('buildstamp', buildstamp.trim())
-
-    const target = await core.getInput('target')
 
     core.setOutput(
       'image-template',
