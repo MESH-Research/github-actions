@@ -122,9 +122,12 @@ async function extractOutputCache(cachePath: string) {
   await getCommandOutput('docker', [
     'buildx',
     'build',
-    '-f ' + dockerfile,
-    '--tag output:extract',
-    '--build-arg BUILDSTAMP=' + buildStamp,
+    '-f',
+    dockerfile,
+    '--tag',
+    'output:extract',
+    '--build-arg',
+    'BUILDSTAMP=' + buildStamp,
     '--load',
     dockerBuildDir
   ])
@@ -134,7 +137,8 @@ async function extractOutputCache(cachePath: string) {
   await getCommandOutput('docker', [
     'create',
     '-ti',
-    '--name cache-container',
+    '--name',
+    'cache-container',
     'output:extract'
   ])
   core.info('Copying cache from extractor...')
