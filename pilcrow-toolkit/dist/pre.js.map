@@ -1,0 +1,1 @@
+{"version":3,"file":"pre.js","sources":["../src/pre.ts"],"sourcesContent":["import { run } from './action.js'\nimport { getInputs } from './lib/config.js'\nrun('pre', getInputs())\n"],"names":[],"mappings":";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;AAEA,GAAG,CAAC,KAAK,EAAE,SAAS,EAAE,CAAC"}
