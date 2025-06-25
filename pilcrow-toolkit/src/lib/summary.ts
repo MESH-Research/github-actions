@@ -1,5 +1,6 @@
 import * as fs from 'fs/promises'
 import * as core from '@actions/core'
+import { FancyAnsi } from 'fancy-ansi'
 
 //import { AnsiUp } from 'ansi_up'
 
@@ -64,18 +65,18 @@ const summaryProcessors = {
     file: string,
     summary: ReturnType<typeof core.summary.addRaw>
   ) {
-    //    const ansi_up = new AnsiUp()
-    //    ansi_up.escape_html = false
+    const fancyAnsi = new FancyAnsi()
+
     core.debug('Converting ANSI to HTML for file: ' + file)
     //Load file contents into variable
     const content = await fs.readFile(file)
-    summary.addCodeBlock(content.toString(), 'ansi')
+    summary.addRaw(fancyAnsi.toHtml(content.toString()))
   },
   md: async function (
     file: string,
     summary: ReturnType<typeof core.summary.addRaw>
   ) {
     core.debug('Processing Markdown file: ' + file)
-    return summary.addRaw((await fs.readFile(file)).toString())
+    summary.addRaw((await fs.readFile(file)).toString())
   }
 }
