@@ -16,6 +16,8 @@ inputs:
   command:
     description: Toolkit command to run
     required: true
+  bake-inputs:
+    description: Docker bake file inputs to capture.
   ### These input are confiuration.  They have sensible defaults and are optional.
   oras-bundle-type:
     default: 'application/vnd.pilcrow.toolkit.bundle.v1+json'

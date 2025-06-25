@@ -1,1 +1,0 @@
-{"version":3,"file":"post.js","sources":["../src/post.ts"],"sourcesContent":["import { run } from './action.js'\nimport { getInputs } from './lib/config.js'\nrun('post', getInputs())\n"],"names":[],"mappings":";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;AAEA,GAAG,CAAC,MAAM,EAAE,SAAS,EAAE,CAAC"}

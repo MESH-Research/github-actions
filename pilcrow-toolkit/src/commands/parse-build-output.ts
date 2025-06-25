@@ -110,9 +110,8 @@ function parseDockerMeta(bakeMetaOutput: string) {
   core.debug('Web target: ' + webTarget)
   core.saveState('webTarget', webTarget)
   if (webTarget) {
-    core.debug('Web target meta: ' + JSON.stringify(meta[webTarget]))
     const webImage = meta[webTarget]['image.name']
-    core.debug
+    core.debug('Web image: ' + webImage)
     core.saveState('frontendImage', webImage)
   }
 }
@@ -133,6 +132,7 @@ RUN --mount=type=cache,target=/tmp/output \
   //Generate a timestamp to use to prevent docker from caching
   const buildStamp = new Date().toISOString()
 
+  core.info('Building cache extractor image...')
   await getCommandOutput('docker', [
     'buildx',
     'build',
@@ -143,7 +143,7 @@ RUN --mount=type=cache,target=/tmp/output \
     '--load',
     dockerBuildDir
   ])
-  core.info('Building cache extractor image...')
+  core.info('Removing existing cache extractor (if any)...')
   await getCommandOutput('docker', ['rm', '-f', 'cache-container'])
   core.info('Creating cache extractor...')
   await getCommandOutput('docker', [
@@ -161,8 +161,6 @@ RUN --mount=type=cache,target=/tmp/output \
     'cache-container:/var/.output-cache',
     cachePath
   ])
-  if (core.isDebug()) {
-    const files = await fs.readdir(cachePath).catch(() => [])
-    core.debug('Output cache files: ' + files.join(', '))
-  }
+  const files = await fs.readdir(cachePath).catch(() => [])
+  core.info('Output cache files: ' + files.join(', '))
 }

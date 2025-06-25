@@ -1,1 +1,0 @@
-{"version":3,"file":"main.js","sources":["../src/main.ts"],"sourcesContent":["import { getInputs } from './lib/config.js'\nimport { run } from './action.js'\n\nconsole.log(process.env)\n\nrun('main', getInputs())\n"],"names":[],"mappings":";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;AAGA,OAAO,CAAC,GAAG,CAAC,OAAO,CAAC,GAAG,CAAC;AAExB,GAAG,CAAC,MAAM,EAAE,SAAS,EAAE,CAAC"}
