@@ -7,6 +7,7 @@ import { DefaultArtifactClient } from '@actions/artifact'
 import { cp } from '@actions/io'
 import { context } from '@actions/github'
 import { ActionInputs } from '../types.js'
+import { basename } from 'node:path'
 
 export { command as runCommand }
 
@@ -18,20 +19,27 @@ const command = runCommand({
 
       const bakeFiles = core.getState('bakeFiles')
       core.debug('Bake files: ' + bakeFiles)
-      const files = bakeFiles.split(/\s*/)
       core.debug('Uploading bake files as artifact...')
       const tmpPath = await fs.mkdtemp(`${tmpdir()}${sep}-bake-`)
       core.debug('Created temporary directory: ' + tmpPath)
-      for (const file of files) {
-        cp(file, tmpPath)
+
+      const destFiles: string[] = []
+      for (const file of bakeFiles) {
+        const filename = await cp(file, tmpPath)
+          .then(() => {
+            core.debug('Copied bake file ' + file)
+            return tmpPath + sep + basename(file)
+          })
           .catch((reason) =>
             core.error(`Failed to copy bake file: ${file} (${reason})`)
           )
-          .then(() => core.debug('Copied bake file ' + file))
+        if (filename) {
+          destFiles.push(filename)
+        }
       }
 
       await artifact
-        .uploadArtifact(`${context.job}-bake-files`, files, tmpPath)
+        .uploadArtifact(`${context.job}-bake-files`, destFiles, tmpPath)
         .then(({ size, id }) =>
           core.debug(
             `Uploaded bake files as artifact, id: ${id}, size: ${size}`
