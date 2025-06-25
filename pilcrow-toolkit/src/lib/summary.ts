@@ -72,19 +72,22 @@ const summaryProcessors = {
     const fancyAnsi = new FancyAnsi()
 
     core.debug('Converting ANSI to HTML for file: ' + file)
-    const content = await fs.readFile(file)
-    const { addRaw } = core.summary
-    addRaw(`<details><summary>${service} - ${output}</summary>`, true)
-    addRaw('<pre>', true)
-    addRaw(fancyAnsi.toHtml(content.toString()), true)
-    addRaw('</pre>', true)
-    addRaw('</details>', true)
+    const content = (await fs.readFile(file)).toString()
+
+    core.summary.addRaw(
+      `<details><summary>${service} - ${output}</summary>`,
+      true
+    )
+    core.summary.addRaw('<pre>', true)
+    core.summary.addRaw(fancyAnsi.toHtml(content), true)
+    core.summary.addRaw('</pre>', true)
+    core.summary.addRaw('</details>', true)
   },
   md: async function (file: string) {
     core.debug('Processing Markdown file: ' + file)
-    const { addRaw } = core.summary
-    addRaw('<details><summary>Markdown Output</summary>', true)
-    addRaw((await fs.readFile(file)).toString())
-    addRaw('</details>', true)
+
+    core.summary.addRaw('<details><summary>Markdown Output</summary>', true)
+    core.summary.addRaw((await fs.readFile(file)).toString())
+    core.summary.addRaw('</details>', true)
   }
 }
