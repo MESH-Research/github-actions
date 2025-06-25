@@ -12,7 +12,17 @@ import { basename } from 'node:path'
 export { command as runCommand }
 
 const command = runCommand({
+  /****************************************************
+   * Pre stage command
+   * -------------------------------------------------
+   * * Nothing to do.
+   */
   pre: async function () {},
+  /****************************************************
+   * Post stage command
+   * -------------------------------------------------
+   * * If in debug mode, upload bake files as GHA artifacts.
+   */
   post: async function () {
     if (core.isDebug()) {
       const artifact = new DefaultArtifactClient()
@@ -60,7 +70,12 @@ const command = runCommand({
       await fs.rm(tmpPath, { recursive: true, force: true })
     }
   },
-  main: async function ({ 'bake-files': bakeFiles }: ActionInputs) {
+  /****************************************************
+   * Main stage command
+   * -------------------------------------------------
+   * * Save bake file names to upload as artifacts in post stage.
+   */
+  main: async function ({ bakeFiles }: ActionInputs) {
     core.debug('Saving bake file names to upload as artifacts...')
     core.saveState('bakeFiles', bakeFiles.join(','))
   }

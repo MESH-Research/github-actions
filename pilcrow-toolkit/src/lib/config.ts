@@ -3,13 +3,16 @@ import { ActionInputs, Commands } from '../types.js'
 
 export function getInputs(): ActionInputs {
   return {
-    'docker-metadata': getInput('docker-metadata'),
-    'bake-files': getMultilineInput('bake-files'),
+    dockerMetadata: getInput('docker-metadata'),
+    bakeFiles: getMultilineInput('bake-files'),
     target: getInput('target'),
     command: getInput('command', { required: true }) as Commands,
-    'oras-bundle-type': getInput('oras-bundle-type'),
+    orasBundleType: getInput('oras-bundle-type'),
     token: getInput('token'),
-    'oras-actor': getInput('oras-actor'),
-    'output-cache-path': getInput('output-cache-path')
+    orasActor: getInput('oras-actor'),
+    outputCachePath: getInput('output-cache-path'),
+    imageTemplate: getInput('image-template'),
+    registryCachePattern: getInput('registry-cache-pattern'),
+    registryPublishPattern: getInput('registry-publish-pattern')
   }
 }

@@ -6,14 +6,17 @@ export type ActionCommand = (
 ) => Promise<void>
 
 export type ActionInputs = {
-  'docker-metadata': string
-  'bake-files': string[]
+  dockerMetadata: string
+  bakeFiles: string[]
   target: string
   command: Commands
   token: string
-  'oras-actor': string
-  'output-cache-path': string
-  'oras-bundle-type': string
+  orasActor: string
+  outputCachePath: string
+  orasBundleType: string
+  imageTemplate: string
+  registryCachePattern: string
+  registryPublishPattern: string
 }
 
 export type Commands = 'setup' | 'pre-build' | 'parse-build-output'

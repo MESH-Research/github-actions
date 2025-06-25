@@ -7,95 +7,81 @@ import { getCommandOutput } from '/lib/tools.js'
 import { DefaultArtifactClient } from '@actions/artifact'
 import { dirname } from 'node:path'
 import type { ActionInputs } from '../types.ts'
+import { generateSummary } from '../lib/summary.js'
 export { command as runCommand }
 
 const command = runCommand({
-  post: async function ({
-    'oras-actor': orasActor,
-    token,
-    'oras-bundle-type': orasBundleType
-  }: ActionInputs) {
+  /****************************************************
+   * Post stage command
+   * -------------------------------------------------
+   * * Handle uploading frontend bundles if found.
+   *   - Upload the bundle as a GHA artifact.
+   *   - Attach the bundle to the image using ORAS (if pushed to registry).
+   * * Generate build summaries from cache output.
+   * */
+  post: async function ({ orasActor, token, orasBundleType }: ActionInputs) {
     const frontendBundle = core.getState('frontendBundle')
     const frontendImage = core.getState('frontendImage')
     if (!frontendBundle || !frontendImage) {
-      core.info('No frontend bundle to attach.')
+      core.info('✅ No frontend bundle to attach.')
       return
     }
 
-    core.info('Uploading frontend bundle as GHA artifact...')
-    const artifact = new DefaultArtifactClient()
+    core.info('📩 Uploading frontend bundle as GHA artifact...')
+    await uploadGHAArtifact('frontend-bundle', frontendBundle)
 
-    await artifact
-      .uploadArtifact(
-        'frontend-bundle',
-        [frontendBundle],
-        dirname(frontendBundle)
+    if (!(await imageExistsInRegistry(frontendImage))) {
+      core.info(
+        '⏭️ Frontend image not found in registry, skipping attaching bundle.'
       )
-      .then(({ size, id }) => {
-        core.info(
-          `Uploaded frontend bundle as artifact, id: ${id}, size: ${size}`
-        )
-      })
-      .catch((reason: unknown) => {
-        core.error('Failed to create GHA artifact.')
-        core.setFailed(
-          'Failed to upload frontend bundle as GHA artifact: ' + reason
-        )
-      })
-
-    try {
-      await getCommandOutput('docker', ['manifest', 'inspect', frontendImage])
-    } catch {
-      core.info('Frontend image not found in registry: ' + frontendImage)
       return
     }
-    core.info('Attaching frontend bundle to image: ' + frontendImage)
-    const orasLoginOpts = [
-      'login',
-      'grcr.io',
-      '--username',
-      orasActor,
-      '--password',
-      token
-    ]
 
-    await getCommandOutput('oras', orasLoginOpts).catch((error: unknown) => {
-      core.error('Failed to login to registry.')
-      core.setFailed('ORAS Failed to login to registry')
-      throw error
-    })
-
-    await getCommandOutput('oras', [
-      'attach',
+    core.info('📎 Attaching frontend bundle to image: ' + frontendImage)
+    await attachBundleToImage(
       frontendImage,
-      '--disable-path-validation',
-      '--artifact-type',
+      frontendBundle,
+      orasActor,
       orasBundleType,
-      frontendBundle
-    ]).catch((error: unknown) => {
-      core.error('Failed to attach bundle to image.')
-      core.setFailed('ORAS Failed to attach bundle to image')
-      throw error
-    })
+      token
+    )
+
+    core.info('📊 Generating build summaries...')
+    const dirs = JSON.parse(core.getState('outputCacheDirs') || '[]')
+    if (dirs.length === 0) {
+      core.info(
+        '⏭️ No output cache directories found, skipping summary generation.'
+      )
+      return
+    }
+    await generateSummary(dirs)
   },
-  main: async function ({
-    'docker-metadata': dockerMetadata,
-    'output-cache-path': outputCachePath
-  }: ActionInputs) {
+  /****************************************************
+   * Main stage command
+   * --------------------------------------------------
+   * * Parse the docker buildx output metadata to get
+   *   - the web target name
+   *   - the name of the image the web target built
+   *   - save these as state variables if found
+   * * Extract the output cache from the builder
+   *   - copy the output cache to a known location
+   *   - save the list of directories found as a state variable
+   * * Check if a frontend-bundle was written to the output cache.
+   *   - if so, set the path as an output variable
+   */
+  main: async function ({ dockerMetadata, outputCachePath }: ActionInputs) {
     parseDockerMeta(dockerMetadata)
 
-    await extractOutputCache(outputCachePath)
+    const dirs = await extractOutputCache(outputCachePath)
+    core.saveState('outputCacheDirs', JSON.stringify(dirs))
 
     //Check if a frontend-bundle was written to the output cache.
     const bundlePath = `${outputCachePath}/web-build/frontend-bundle.tar.gz`
-
-    try {
-      await fs.access(bundlePath, fs.constants.R_OK)
-    } catch (err) {
-      core.debug('No frontend bundle found at: ' + bundlePath)
-      core.info('No frontend bundle found.')
+    if (!(await fileExists(bundlePath))) {
+      core.info('No frontend bundle found in output cache.')
       return
     }
+
     core.saveState('frontendBundle', bundlePath)
     core.setOutput('frontend-bundle', bundlePath)
   }
@@ -143,9 +129,9 @@ RUN --mount=type=cache,target=/tmp/output \
     '--load',
     dockerBuildDir
   ])
-  core.info('Removing existing cache extractor (if any)...')
+  core.info('🗑️ Removing existing cache extractor (if any)...')
   await getCommandOutput('docker', ['rm', '-f', 'cache-container'])
-  core.info('Creating cache extractor...')
+  core.info('🏗️ Creating cache extractor...')
   await getCommandOutput('docker', [
     'create',
     '-ti',
@@ -153,7 +139,7 @@ RUN --mount=type=cache,target=/tmp/output \
     'cache-container',
     'output:extract'
   ])
-  core.info('Copying cache from extractor...')
+  core.info('📦 Copying cache from extractor...')
 
   await getCommandOutput('docker', [
     'cp',
@@ -161,6 +147,83 @@ RUN --mount=type=cache,target=/tmp/output \
     'cache-container:/var/.output-cache',
     cachePath
   ])
-  const files = await fs.readdir(cachePath).catch(() => [])
-  core.info('Output cache files: ' + files.join(', '))
+  const files = await fs
+    .readdir(cachePath, { withFileTypes: true })
+    .then((f) => f.filter((a) => a.isDirectory()))
+    .then((f) => f.map((a) => a.name))
+    .catch(() => [])
+  core.info('📂 Output cache files: ' + files.join(', '))
+  return files.map((dir) => cachePath + '/' + dir)
+}
+
+async function uploadGHAArtifact(name: string, frontendBundle: string) {
+  const artifact = new DefaultArtifactClient()
+
+  await artifact
+    .uploadArtifact(
+      'frontend-bundle',
+      [frontendBundle],
+      dirname(frontendBundle)
+    )
+    .then(({ size, id }) => {
+      core.info(
+        `✅ Uploaded frontend bundle as artifact, id: ${id}, size: ${size}`
+      )
+    })
+    .catch((reason: unknown) => {
+      core.error('Failed to create GHA artifact.')
+      core.setFailed(
+        'Failed to upload frontend bundle as GHA artifact: ' + reason
+      )
+    })
+}
+
+async function imageExistsInRegistry(image: string): Promise<boolean> {
+  try {
+    await getCommandOutput('docker', ['manifest', 'inspect', image])
+    return true
+  } catch {
+    return false
+  }
+}
+
+async function attachBundleToImage(
+  image: string,
+  filePath: string,
+  orasActor: string,
+  orasBundleType: string,
+  token: string
+) {
+  const orasLoginOpts = [
+    'login',
+    'grcr.io',
+    '--username',
+    orasActor,
+    '--password',
+    token
+  ]
+
+  await getCommandOutput('oras', orasLoginOpts).catch((error: unknown) => {
+    core.error('Failed to login to registry.')
+    core.setFailed('ORAS Failed to login to registry')
+    throw error
+  })
+
+  await getCommandOutput('oras', [
+    'attach',
+    image,
+    '--disable-path-validation',
+    '--artifact-type',
+    orasBundleType,
+    filePath
+  ])
+}
+
+async function fileExists(path: string): Promise<boolean> {
+  try {
+    await fs.access(path, fs.constants.R_OK)
+    return true
+  } catch {
+    return false
+  }
 }
