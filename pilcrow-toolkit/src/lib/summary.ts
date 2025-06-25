@@ -1,5 +1,6 @@
 import * as fs from 'fs/promises'
 import * as core from '@actions/core'
+
 //import { AnsiUp } from 'ansi_up'
 
 type OutputDetails = {
@@ -38,27 +39,39 @@ export async function generateSummary(paths: string[]) {
       }
       const { service, output, ext } = outputDetails as OutputDetails
 
-      core.debug(
-        `Processing file: service=${service}, output=${output}, ext=${ext}`
+      core.info(
+        `📝 Processing file - svc: ${service}, output: ${output}, format: ${ext}`
       )
+      const summary = core.summary
+        .addRaw(`<details><summary>${service} - ${output}</summary>`)
+        .addEOL()
+        .addEOL()
 
-      core.summary.addDetails(output, await summaryProcessors[ext](fullPath))
+      summaryProcessors[ext](fullPath, summary)
+
+      summary.addEOL().addRaw('</details>').addEOL().addEOL()
     }
+    await core.summary.write()
   }
 }
 
 const summaryProcessors = {
-  txt: async function (file: string) {
+  txt: async function (
+    file: string,
+    summary: ReturnType<typeof core.summary.addRaw>
+  ) {
     //    const ansi_up = new AnsiUp()
     //    ansi_up.escape_html = false
     core.debug('Converting ANSI to HTML for file: ' + file)
     //Load file contents into variable
     const content = await fs.readFile(file)
-
-    return content.toString()
+    summary.addCodeBlock(content.toString(), 'ansi')
   },
-  md: async function (file: string) {
+  md: async function (
+    file: string,
+    summary: ReturnType<typeof core.summary.addRaw>
+  ) {
     core.debug('Processing Markdown file: ' + file)
-    return (await fs.readFile(file)).toString()
+    return summary.addRaw((await fs.readFile(file)).toString())
   }
 }
