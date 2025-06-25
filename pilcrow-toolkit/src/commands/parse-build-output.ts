@@ -154,10 +154,15 @@ RUN --mount=type=cache,target=/tmp/output \
     'output:extract'
   ])
   core.info('Copying cache from extractor...')
+
   await getCommandOutput('docker', [
     'cp',
     '-L',
     'cache-container:/var/.output-cache',
     cachePath
   ])
+  if (core.isDebug()) {
+    const files = await fs.readdir(cachePath).catch(() => [])
+    core.debug('Output cache files: ' + files.join(', '))
+  }
 }
