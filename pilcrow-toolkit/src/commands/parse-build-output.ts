@@ -90,7 +90,7 @@ const command = runCommand({
     const bundlePath = `${outputCachePath}/web-build/frontend-bundle.tar.gz`
 
     try {
-      fs.access(bundlePath, fs.constants.R_OK)
+      await fs.access(bundlePath, fs.constants.R_OK)
     } catch (err) {
       core.debug('No frontend bundle found at: ' + bundlePath)
       core.info('No frontend bundle found.')
