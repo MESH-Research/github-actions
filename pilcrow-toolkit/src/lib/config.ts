@@ -12,7 +12,7 @@ export function getInputs(): ActionInputs {
     orasActor: getInput('oras-actor'),
     outputCachePath: getInput('output-cache-path'),
     imageTemplate: getInput('image-template'),
-    registryCachePattern: getInput('registry-cache-pattern'),
-    registryPublishPattern: getInput('registry-publish-pattern')
+    registryCachePattern: getInput('registry-cache-pattern').toLowerCase(),
+    registryPublishPattern: getInput('registry-publish-pattern').toLowerCase()
   }
 }
