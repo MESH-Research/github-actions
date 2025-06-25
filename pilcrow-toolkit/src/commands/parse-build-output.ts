@@ -103,9 +103,14 @@ function parseDockerMeta(bakeMetaOutput: string) {
     return
   }
   const webTarget = Object.keys(meta).find((key) => key.endsWith('web'))
-  const webImage = webTarget ? meta[webTarget].image.name : null
-  core.saveState('frontendImage', webImage)
+  core.debug('Web target: ' + webTarget)
   core.saveState('webTarget', webTarget)
+  if (webTarget) {
+    core.debug('Web target meta: ' + JSON.stringify(meta[webTarget]))
+    const webImage = meta[webTarget]['image.name']
+    core.debug
+    core.saveState('frontendImage', webImage)
+  }
 }
 
 async function extractOutputCache(cachePath: string) {

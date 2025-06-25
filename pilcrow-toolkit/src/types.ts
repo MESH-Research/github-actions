@@ -7,7 +7,7 @@ export type ActionCommand = (
 
 export type ActionInputs = {
   'docker-metadata': string
-  'bake-files': string
+  'bake-files': string[]
   target: string
   command: Commands
   token: string

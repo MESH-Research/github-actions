@@ -1,10 +1,10 @@
-import { getInput } from '@actions/core'
+import { getInput, getMultilineInput } from '@actions/core'
 import { ActionInputs, Commands } from '../types.js'
 
 export function getInputs(): ActionInputs {
   return {
     'docker-metadata': getInput('docker-metadata'),
-    'bake-files': getInput('bake-files'),
+    'bake-files': getMultilineInput('bake-files'),
     target: getInput('target'),
     command: getInput('command', { required: true }) as Commands,
     'oras-bundle-type': getInput('oras-bundle-type'),
