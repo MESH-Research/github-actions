@@ -20,9 +20,9 @@ export async function generateSummary(paths: string[]) {
     const hasStdErr = files.some((f) => f.name.includes('stderr'))
 
     if (hasStdErr) {
-      core.warning(`${path.dirname(dir)} wrote to stderr.  Check logs.`)
+      core.warning(`${path.basename(dir)} wrote to stderr.  Check logs.`)
       core.summary.addRaw(
-        '| :warning:     | The build wrote to stderr during execution.  Check below for errors/warnings. |',
+        '| :warning:     | This build step wrote to stderr during execution.  Check below for errors/warnings. |',
         true
       )
       core.summary.addRaw(
