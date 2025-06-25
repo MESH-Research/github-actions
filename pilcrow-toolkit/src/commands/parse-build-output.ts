@@ -50,10 +50,13 @@ const command = runCommand({
       return
     }
     core.info('Attaching frontend bundle to image: ' + frontendImage)
-    const orasLoginOpts: string[] = []
-    orasLoginOpts
-      .concat(!!orasActor ? ['--username', orasActor] : [])
-      .concat(!!token ? ['--password', token] : [])
+    const orasLoginOpts = [
+      'login',
+      '--username',
+      orasActor,
+      '--password',
+      token
+    ]
 
     await getCommandOutput('oras', orasLoginOpts).catch((error: unknown) => {
       core.error('Failed to login to registry.')
