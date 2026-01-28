@@ -91,7 +91,7 @@ runs:
         push: ${{ inputs.push }}
         source: .
         targets: ${{ inputs.target }}
-        allow: fs.write=*
+        allow: fs.write=*,network.host
         files: |
           ./docker-bake.hcl
           ${{ steps.docker-input-metadata.outputs.bake-file }}
