@@ -12,7 +12,7 @@ export type ActionInputs = {
   command: Commands
   token: string
   orasActor: string
-  outputCachePath: string
+  bundlePath: string
   orasBundleType: string
   imageTemplate: string
   registryCachePattern: string

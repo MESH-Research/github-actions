@@ -10,7 +10,7 @@ export function getInputs(): ActionInputs {
     orasBundleType: getInput('oras-bundle-type'),
     token: getInput('token'),
     orasActor: getInput('oras-actor'),
-    outputCachePath: getInput('output-cache-path'),
+    bundlePath: getInput('bundle-path'),
     imageTemplate: getInput('image-template'),
     registryCachePattern: getInput('registry-cache-pattern').toLowerCase(),
     registryPublishPattern: getInput('registry-publish-pattern').toLowerCase()

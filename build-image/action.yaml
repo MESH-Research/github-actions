@@ -24,7 +24,7 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - uses: mesh-research/github-actions/pilcrow-toolkit@main
+    - uses: mesh-research/github-actions/pilcrow-toolkit@simplify-build
       id: setup
       with:
         target: ${{ inputs.target }}
@@ -39,23 +39,6 @@ runs:
             --allow-insecure-entitlement network.host
       id: buildx
     - uses: oras-project/setup-oras@v1.2.3
-    # - name: Cache
-    #   uses: actions/cache@v3
-    #   id: docker-yarn-cache
-    #   with:
-    #     path: |
-    #       ${RUNNER_TEMP}/yarn-cache
-    #     key: cache-yarn-${{ hashFiles('client/package.json', 'client/yarn.lock') }}
-    #     restore-keys: |
-    #       cache-yarn-
-    # - name: inject cache into docker
-    #   uses: reproducible-containers/buildkit-cache-dance@v3.1.0
-    #   with:
-    #     cache-map: |
-    #       {
-    #         "${RUNNER_TEMP}/yarn-cache": "/usr/local/share/.cache/yarn/v6"
-    #       }
-    #     skip-extraction: ${{ steps.docker-yarn-cache.outputs.cache-hit }}
     - name: Docker Meta
       id: docker-input-metadata
       uses: docker/metadata-action@v5
@@ -72,7 +55,7 @@ runs:
         image: ${{ steps.setup.outputs.docker-registry-cache }}
         pull-request-cache: true
     - name: Prepare Build
-      uses: mesh-research/github-actions/pilcrow-toolkit@main
+      uses: mesh-research/github-actions/pilcrow-toolkit@simplify-build
       with:
         command: pre-build
         bake-files: |
@@ -96,9 +79,35 @@ runs:
           ./docker-bake.hcl
           ${{ steps.docker-input-metadata.outputs.bake-file }}
           ${{ steps.docker-registry-cache.outputs.bake-file }}
+    - name: Extract Frontend Bundle
+      id: extract-bundle
+      shell: bash
+      run: |
+        if docker buildx bake web-bundle \
+          --file ./docker-bake.hcl \
+          --set "*.args.VERSION=$VERSION" \
+          --set "*.args.VERSION_URL=$VERSION_URL" \
+          --set "*.args.VERSION_DATE=$VERSION_DATE" \
+          2>/dev/null; then
+          BUNDLE_DIR="./bundle-output/dist/spa"
+          if [ -d "$BUNDLE_DIR" ]; then
+            tar -czvf ./frontend-bundle.tar.gz -C "$BUNDLE_DIR" .
+            echo "bundle-path=./frontend-bundle.tar.gz" >> "$GITHUB_OUTPUT"
+            echo "Frontend bundle extracted successfully."
+          else
+            echo "Bundle output directory not found, skipping."
+          fi
+        else
+          echo "web-bundle target not available for this build, skipping."
+        fi
+      env:
+        VERSION: ${{ steps.setup.outputs.version }}
+        VERSION_URL: ${{ steps.setup.outputs.version-url }}
+        VERSION_DATE: ${{ steps.setup.outputs.version-date }}
     - name: Parse Docker Metadata Output
       id: parse-build-output
-      uses: mesh-research/github-actions/pilcrow-toolkit@main
+      uses: mesh-research/github-actions/pilcrow-toolkit@simplify-build
       with:
         command: parse-build-output
         docker-metadata: ${{ steps.docker-bake.outputs.metadata }}
+        bundle-path: ${{ steps.extract-bundle.outputs.bundle-path }}

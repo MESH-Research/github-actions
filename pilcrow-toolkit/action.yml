@@ -18,6 +18,9 @@ inputs:
     required: true
   bake-files:
     description: Docker bake file inputs to capture.
+  bundle-path:
+    description: Path to the frontend bundle tar.gz from bake output
+    required: false
   ### These input are confiuration.  They have sensible defaults and are optional.
   oras-bundle-type:
     default: 'application/vnd.pilcrow.toolkit.bundle.v1+json'
@@ -26,10 +29,6 @@ inputs:
   oras-actor:
     description: Actor name for ORAS attchments
     required: false
-  output-cache-path:
-    description: Path to store output cache
-    required: false
-    default: '.output-cache'
   token:
     description: GitHub token to use for authentication
     required: false
