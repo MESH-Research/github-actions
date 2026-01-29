@@ -6,7 +6,8 @@ export function getCommandOutput(
   timeoutMs?: number
 ): Promise<string> {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { stdio: ['ignore', 'pipe', 'pipe'] })
+    const child = spawn(command, args, { stdio: ['pipe', 'pipe', 'pipe'] })
+    child.stdin.end()
     let stdout = ''
     let stderr = ''
 
