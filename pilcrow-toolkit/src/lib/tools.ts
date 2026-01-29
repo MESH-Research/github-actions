@@ -1,27 +1,50 @@
-import * as exec from '@actions/exec'
+import { spawn } from 'node:child_process'
 
-export async function getCommandOutput(
+export function getCommandOutput(
   command: string,
   args: string[],
   timeoutMs?: number
 ): Promise<string> {
-  const controller = timeoutMs ? new AbortController() : undefined
-  const timer = controller
-    ? setTimeout(() => controller.abort(), timeoutMs)
-    : undefined
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, { stdio: ['ignore', 'pipe', 'pipe'] })
+    let stdout = ''
+    let stderr = ''
 
-  try {
-    const output = await exec.getExecOutput(command, args, {
-      silent: true,
-      ...(controller && { abortSignal: controller.signal })
+    child.stdout.on('data', (data: Buffer) => {
+      stdout += data.toString()
     })
-    if (output.exitCode !== 0) {
-      throw new Error(
-        `Command failed: ${args?.join(' ')}, exit code: ${output.exitCode}`
-      )
+    child.stderr.on('data', (data: Buffer) => {
+      stderr += data.toString()
+    })
+
+    let timer: ReturnType<typeof setTimeout> | undefined
+    if (timeoutMs) {
+      timer = setTimeout(() => {
+        child.kill('SIGKILL')
+        reject(
+          new Error(
+            `Command timed out after ${timeoutMs}ms: ${command} ${args.join(' ')}`
+          )
+        )
+      }, timeoutMs)
     }
-    return output.stdout
-  } finally {
-    if (timer) clearTimeout(timer)
-  }
+
+    child.on('close', (code) => {
+      if (timer) clearTimeout(timer)
+      if (code !== 0) {
+        reject(
+          new Error(
+            `Command failed: ${command} ${args.join(' ')}, exit code: ${code}\n${stderr}`
+          )
+        )
+      } else {
+        resolve(stdout)
+      }
+    })
+
+    child.on('error', (err) => {
+      if (timer) clearTimeout(timer)
+      reject(err)
+    })
+  })
 }
