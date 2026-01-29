@@ -109,7 +109,7 @@ async function uploadGHAArtifact(name: string, frontendBundle: string) {
 
 async function imageExistsInRegistry(image: string): Promise<boolean> {
   try {
-    await getCommandOutput('docker', ['manifest', 'inspect', image])
+    await getCommandOutput('docker', ['manifest', 'inspect', image], 60_000)
     return true
   } catch {
     return false
@@ -125,14 +125,14 @@ async function attachBundleToImage(
 ) {
   const orasLoginOpts = [
     'login',
-    'grcr.io',
+    'ghcr.io',
     '--username',
     orasActor,
     '--password',
     token
   ]
 
-  await getCommandOutput('oras', orasLoginOpts).catch((error: unknown) => {
+  await getCommandOutput('oras', orasLoginOpts, 60_000).catch((error: unknown) => {
     core.error('Failed to login to registry.')
     core.setFailed('ORAS Failed to login to registry')
     throw error
@@ -145,7 +145,7 @@ async function attachBundleToImage(
     '--artifact-type',
     orasBundleType,
     filePath
-  ])
+  ], 120_000)
 }
 
 async function fileExists(path: string): Promise<boolean> {
