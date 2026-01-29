@@ -15,9 +15,12 @@ const command = runCommand({
    *   - Upload the bundle as a GHA artifact.
    *   - Attach the bundle to the image using ORAS (if pushed to registry).
    * */
-  post: async function ({ orasActor, token, orasBundleType }: ActionInputs) {
+  post: async function () {
     const frontendBundle = core.getState('frontendBundle')
     const frontendImage = core.getState('frontendImage')
+    const orasActor = core.getState('orasActor')
+    const orasBundleType = core.getState('orasBundleType')
+    const token = core.getState('token')
     if (frontendBundle && frontendImage) {
       core.info('📩 Uploading frontend bundle as GHA artifact...')
       await uploadGHAArtifact('frontend-bundle', frontendBundle)
@@ -52,8 +55,12 @@ const command = runCommand({
    * * Check if a frontend-bundle path was provided.
    *   - if so, set the path as an output variable
    */
-  main: async function ({ dockerMetadata, bundlePath }: ActionInputs) {
+  main: async function ({ dockerMetadata, bundlePath, orasActor, orasBundleType, token }: ActionInputs) {
     parseDockerMeta(dockerMetadata)
+
+    core.saveState('orasActor', orasActor)
+    core.saveState('orasBundleType', orasBundleType)
+    core.saveState('token', token)
 
     if (!bundlePath) {
       core.info('No frontend bundle path provided.')
@@ -123,16 +130,7 @@ async function attachBundleToImage(
   orasBundleType: string,
   token: string
 ) {
-  const orasLoginOpts = [
-    'login',
-    'ghcr.io',
-    '--username',
-    orasActor,
-    '--password',
-    token
-  ]
-
-  await getCommandOutput('oras', orasLoginOpts, 60_000).catch((error: unknown) => {
+  await getCommandOutput('oras', ['login', 'ghcr.io'], 60_000).catch((error: unknown) => {
     core.error('Failed to login to registry.')
     core.setFailed('ORAS Failed to login to registry')
     throw error

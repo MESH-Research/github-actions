@@ -3,10 +3,14 @@ import { spawn } from 'node:child_process'
 export function getCommandOutput(
   command: string,
   args: string[],
-  timeoutMs?: number
+  timeoutMs?: number,
+  stdinData?: string
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, { stdio: ['pipe', 'pipe', 'pipe'] })
+    if (stdinData) {
+      child.stdin.write(stdinData)
+    }
     child.stdin.end()
     let stdout = ''
     let stderr = ''
