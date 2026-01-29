@@ -130,7 +130,7 @@ async function attachBundleToImage(
   orasBundleType: string,
   token: string
 ) {
-  await getCommandOutput('oras', ['login', 'ghcr.io'], 60_000).catch((error: unknown) => {
+  await getCommandOutput('oras', ['login', 'ghcr.io', '--username', orasActor, '--password', token], 60_000).catch((error: unknown) => {
     core.error('Failed to login to registry.')
     core.setFailed('ORAS Failed to login to registry')
     throw error
