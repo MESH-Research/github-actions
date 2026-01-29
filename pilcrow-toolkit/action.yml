@@ -32,6 +32,7 @@ inputs:
   token:
     description: GitHub token to use for authentication
     required: false
+    default: ${{ github.token }}
   registry-cache-pattern:
     description: Registry to use for caching intermediate docker layers
     required: false
