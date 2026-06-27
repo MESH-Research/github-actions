@@ -58,6 +58,14 @@ const command = runCommand({
   main: async function ({ dockerMetadata, bundlePath, orasActor, orasBundleType, token }: ActionInputs) {
     parseDockerMeta(dockerMetadata)
 
+    const version = process.env.DOCKER_METADATA_OUTPUT_VERSION
+    if (version) {
+      core.setOutput('version', version)
+      core.info(`📌 Version: ${version}`)
+    } else {
+      core.warning('DOCKER_METADATA_OUTPUT_VERSION not set, version output will be empty')
+    }
+
     core.saveState('orasActor', orasActor)
     core.saveState('orasBundleType', orasBundleType)
     core.saveState('token', token)
