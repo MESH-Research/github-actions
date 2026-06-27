@@ -49,7 +49,7 @@ branding:
 
 # The action's runs
 runs:
-  using: node20
+  using: node24
   main: dist/main.js
   post: dist/post.js
   # Local actions don't support pre actions.
