@@ -1,6 +1,7 @@
-import { r as run, g as getInputs } from './config-DD1MgmyQ.js';
+import { r as run, g as getInputs } from './config-BBjD7dzV.js';
 import 'fs';
 import 'os';
+import 'node:child_process';
 import 'node:fs/promises';
 import 'path';
 import 'node:crypto';

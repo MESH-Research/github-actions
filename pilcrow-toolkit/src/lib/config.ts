@@ -9,8 +9,8 @@ export function getInputs(): ActionInputs {
     command: getInput('command', { required: true }) as Commands,
     orasBundleType: getInput('oras-bundle-type'),
     token: getInput('token'),
-    orasActor: getInput('oras-actor'),
-    outputCachePath: getInput('output-cache-path'),
+    orasActor: getInput('oras-actor') || process.env.GITHUB_ACTOR || '',
+    bundlePath: getInput('bundle-path'),
     imageTemplate: getInput('image-template'),
     registryCachePattern: getInput('registry-cache-pattern').toLowerCase(),
     registryPublishPattern: getInput('registry-publish-pattern').toLowerCase()

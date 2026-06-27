@@ -24,12 +24,12 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - uses: mesh-research/github-actions/pilcrow-toolkit@main
+    - uses: mesh-research/github-actions/pilcrow-toolkit@v2
       id: setup
       with:
         target: ${{ inputs.target }}
         command: setup
-    - uses: docker/setup-buildx-action@v3
+    - uses: docker/setup-buildx-action@v4
       with:
           # Use the 'docker-container' driver for advanced features like multi-platform builds
           driver: docker-container
@@ -38,27 +38,10 @@ runs:
           buildkitd-flags: |
             --allow-insecure-entitlement network.host
       id: buildx
-    - uses: oras-project/setup-oras@v1.2.3
-    # - name: Cache
-    #   uses: actions/cache@v3
-    #   id: docker-yarn-cache
-    #   with:
-    #     path: |
-    #       ${RUNNER_TEMP}/yarn-cache
-    #     key: cache-yarn-${{ hashFiles('client/package.json', 'client/yarn.lock') }}
-    #     restore-keys: |
-    #       cache-yarn-
-    # - name: inject cache into docker
-    #   uses: reproducible-containers/buildkit-cache-dance@v3.1.0
-    #   with:
-    #     cache-map: |
-    #       {
-    #         "${RUNNER_TEMP}/yarn-cache": "/usr/local/share/.cache/yarn/v6"
-    #       }
-    #     skip-extraction: ${{ steps.docker-yarn-cache.outputs.cache-hit }}
+    - uses: oras-project/setup-oras@v2
     - name: Docker Meta
       id: docker-input-metadata
-      uses: docker/metadata-action@v5
+      uses: docker/metadata-action@v6
       with:
         images: ${{ steps.setup.outputs.image-template }}
         tags: |
@@ -72,7 +55,7 @@ runs:
         image: ${{ steps.setup.outputs.docker-registry-cache }}
         pull-request-cache: true
     - name: Prepare Build
-      uses: mesh-research/github-actions/pilcrow-toolkit@main
+      uses: mesh-research/github-actions/pilcrow-toolkit@v2
       with:
         command: pre-build
         bake-files: |
@@ -81,7 +64,7 @@ runs:
           ${{ steps.docker-registry-cache.outputs.bake-file }}
     - name: Execute Docker Bake
       id: docker-bake
-      uses: docker/bake-action@v6.8.0
+      uses: docker/bake-action@v7
       env:
         BUILDSTAMP: ${{ steps.setup.outputs.buildstamp }}
         VERSION: ${{ steps.setup.outputs.version }}
@@ -96,6 +79,31 @@ runs:
           ./docker-bake.hcl
           ${{ steps.docker-input-metadata.outputs.bake-file }}
           ${{ steps.docker-registry-cache.outputs.bake-file }}
+    - name: Extract Frontend Bundle
+      id: extract-bundle
+      shell: bash
+      run: |
+        if docker buildx bake web-bundle \
+          --file ./docker-bake.hcl \
+          --set "*.args.VERSION=$VERSION" \
+          --set "*.args.VERSION_URL=$VERSION_URL" \
+          --set "*.args.VERSION_DATE=$VERSION_DATE" \
+          2>/dev/null; then
+          BUNDLE_DIR="./bundle-output/dist/spa"
+          if [ -d "$BUNDLE_DIR" ]; then
+            tar -czvf ./frontend-bundle.tar.gz -C "$BUNDLE_DIR" .
+            echo "bundle-path=./frontend-bundle.tar.gz" >> "$GITHUB_OUTPUT"
+            echo "Frontend bundle extracted successfully."
+          else
+            echo "Bundle output directory not found, skipping."
+          fi
+        else
+          echo "web-bundle target not available for this build, skipping."
+        fi
+      env:
+        VERSION: ${{ steps.setup.outputs.version }}
+        VERSION_URL: ${{ steps.setup.outputs.version-url }}
+        VERSION_DATE: ${{ steps.setup.outputs.version-date }}
     # The full bake metadata can exceed Linux's 128 KiB MAX_ARG_STRLEN limit for
     # a single environment variable (worse on pull_request, which adds tags/cache
     # scopes). Passing it straight into the `docker-metadata` input below makes it
@@ -117,7 +125,8 @@ runs:
         echo "metadata=$(cat "${RUNNER_TEMP}/bake-metadata-slim.json")" >> "$GITHUB_OUTPUT"
     - name: Parse Docker Metadata Output
       id: parse-build-output
-      uses: mesh-research/github-actions/pilcrow-toolkit@main
+      uses: mesh-research/github-actions/pilcrow-toolkit@v2
       with:
         command: parse-build-output
         docker-metadata: ${{ steps.slim-metadata.outputs.metadata }}
+        bundle-path: ${{ steps.extract-bundle.outputs.bundle-path }}
