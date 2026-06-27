@@ -104,10 +104,29 @@ runs:
         VERSION: ${{ steps.setup.outputs.version }}
         VERSION_URL: ${{ steps.setup.outputs.version-url }}
         VERSION_DATE: ${{ steps.setup.outputs.version-date }}
+    # The full bake metadata can exceed Linux's 128 KiB MAX_ARG_STRLEN limit for
+    # a single environment variable (worse on pull_request, which adds tags/cache
+    # scopes). Passing it straight into the `docker-metadata` input below makes it
+    # the INPUT_DOCKER-METADATA env var, and `execve` of the node action then fails
+    # with "Argument list too long" (breaking both the main and post steps, since
+    # post inherits INPUT_*). parse-build-output only needs each target's
+    # "image.name", so slim the metadata down before handing it off.
+    - name: Slim bake metadata
+      id: slim-metadata
+      shell: bash
+      run: |
+        # Embed the metadata via a quoted heredoc: it lands in the script body (a
+        # file the runner executes), not in argv/env, so it dodges the size limit.
+        cat > "${RUNNER_TEMP}/bake-metadata-full.json" <<'__BAKE_METADATA_EOF__'
+        ${{ steps.docker-bake.outputs.metadata }}
+        __BAKE_METADATA_EOF__
+        jq -c '(. // {}) | map_values({"image.name": .["image.name"]})' \
+          "${RUNNER_TEMP}/bake-metadata-full.json" > "${RUNNER_TEMP}/bake-metadata-slim.json"
+        echo "metadata=$(cat "${RUNNER_TEMP}/bake-metadata-slim.json")" >> "$GITHUB_OUTPUT"
     - name: Parse Docker Metadata Output
       id: parse-build-output
       uses: mesh-research/github-actions/pilcrow-toolkit@v2
       with:
         command: parse-build-output
-        docker-metadata: ${{ steps.docker-bake.outputs.metadata }}
+        docker-metadata: ${{ steps.slim-metadata.outputs.metadata }}
         bundle-path: ${{ steps.extract-bundle.outputs.bundle-path }}
